@@ -43,6 +43,7 @@ function start() {
         console.log("You chose Update_Company...\n");
         updateCompany();
       } else {
+          console.log("Thank you for visiting.")
         connection.end();
       }
     });
@@ -101,7 +102,15 @@ function viewDepartment() {
 }
 
 function viewRoles() {
-  connection.query("SELECT * FROM department", (err, data) => {
+  connection.query("SELECT * FROM role", (err, data) => {
+    if (err) throw err;
+    console.table(data);
+    start();
+  });
+}
+
+function viewEmployee() {
+  connection.query("SELECT * FROM employee", (err, data) => {
     if (err) throw err;
     console.table(data);
     start();
