@@ -85,10 +85,10 @@ function viewCompany() {
         viewDepartment();
       } else if (answer.view === "Add_Roles") {
         console.log("You chose Add_Roles...\n");
-        addRoles();
+        viewRoles();
       } else if (answer.view === "Add_Employee") {
         console.log("You chose Add_Employee...\n");
-        addEmployee();
+        viewEmployee();
       }
     });
 }
