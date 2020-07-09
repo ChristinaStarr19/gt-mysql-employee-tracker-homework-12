@@ -32,3 +32,8 @@ CREATE TABLE employee (
 INSERT INTO department (name)
 VALUES ("Administration"), ("Clerical"), ("Instructional Team"), ("Custodial Staff"),
 
+INSERT INTO role (title, salary, department_id)
+VALUES ("Principal", 90000.00, 1), ("Office Manager", 30000.00, 2), ("Teacher", 50000.00, 3), ("Custodian", 30000.00, 4);
+
+INSERT INTO employee (first_name, last_name, role_id, manager_id)
+VALUES ("Jason", "Moffit", 1, 1), ("Sherri", "Jackson", 2, 1), ("Christina", "Starr", 3, 1), ("Drew", "Simmons", 4, 1);
