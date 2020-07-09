@@ -22,7 +22,6 @@ connection.connect(function (err) {
   console.log("Your connection has started...\n");
   // run the start function after the connection is made to prompt the user
   start();
-  
 });
 
 function start() {
@@ -77,23 +76,31 @@ function viewCompany() {
       name: "view",
       type: "list",
       message: "What would you like to view?",
-      choices: ["View_Department", "Add_Roles", "Add_Employee", "EXIT"],
+      choices: ["View_Department", "View_Roles", "View_Employees"],
     })
     .then((answer) => {
       if (answer.view === "View_Department") {
         console.log("You chose View_Department...\n");
         viewDepartment();
-      } else if (answer.view === "Add_Roles") {
-        console.log("You chose Add_Roles...\n");
+      } else if (answer.view === "View_Roles") {
+        console.log("You chose View_Roles...\n");
         viewRoles();
-      } else if (answer.view === "Add_Employee") {
-        console.log("You chose Add_Employee...\n");
+      } else if (answer.view === "View_Employees") {
+        console.log("You chose View_Employees...\n");
         viewEmployee();
       }
     });
 }
 
 function viewDepartment() {
+  connection.query("SELECT * FROM department", (err, data) => {
+    if (err) throw err;
+    console.table(data);
+    start();
+  });
+}
+
+function viewRoles() {
   connection.query("SELECT * FROM department", (err, data) => {
     if (err) throw err;
     console.table(data);
@@ -126,7 +133,7 @@ function addDepartment() {
 //
 
 function add_role() {
-    //Show Department 
+  //Show Department
   connection.query("select * from department", (err, data) => {
     const departmentChoices = data.map((department) => {
       return {
@@ -156,7 +163,9 @@ function add_role() {
       ])
       .then((answer) => {
         console.table(answer);
-        connection.query(`insert into role (title, salary, department_id) values ("${answer.title}","${answer.salary}",${answer.departmentId}) `)
+        connection.query(
+          `insert into role (title, salary, department_id) values ("${answer.title}","${answer.salary}",${answer.departmentId}) `
+        );
       });
   });
 }
