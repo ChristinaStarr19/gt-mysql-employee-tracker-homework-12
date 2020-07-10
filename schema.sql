@@ -39,10 +39,12 @@ VALUES ("Principal", 90000.00, 1), ("Office Manager", 30000.00, 2), ("Teacher", 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
 VALUES ("Jason", "Moffit", 1, null), ("Sherri", "Jackson", 2, 1), ("Christina", "Starr", 3, null), ("Drew", "Simmons", 4, 2);
 
-SELECT * FROM employee 
-LEFT JOIN m employee ON employee.manager_id = m.id;
+-- SELECT * FROM employee 
+-- LEFT JOIN m employee ON employee.manager_id = m.id;
 
 -- ToUpdate an employee's role, use this query
 UPDATE employee
 SET role_id = ?
 WHERE id = ? 
+
+DELETE FROM employee WHERE id = ?

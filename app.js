@@ -1,6 +1,5 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
-const util = require("util");
 
 // create the connection information for the sql database
 var connection = mysql.createConnection({
@@ -16,7 +15,7 @@ var connection = mysql.createConnection({
   password: "Virtue77$GOD",
   database: "company_db",
 });
-// connection.query = util.promisify(connection.query)
+
 // connect to the mysql server and sql database
 connection.connect(function (err) {
   if (err) throw err;
@@ -57,7 +56,7 @@ function viewCompany() {
       name: "view",
       type: "list",
       message: "What would you like to view?",
-      choices: ["View_Department", "View_Roles", "View_Employees",],
+      choices: ["View_Department", "View_Roles", "View_Employees"],
     })
     .then((answer) => {
       if (answer.view === "View_Department") {
@@ -68,8 +67,7 @@ function viewCompany() {
         viewRoles();
       } else if (answer.view === "View_Employees") {
         console.log("You chose View_Employees...\n");
-        viewEntireCompany();
-  
+        viewAllEmployees();
       }
     });
 }
@@ -90,15 +88,16 @@ function viewRoles() {
   });
 }
 
-
-function viewEntireCompany() {
-//  return 
- connection.query("SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name, CONCAT(m.first_name,' ', m.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee m ON employee.manager_id = m.id;",
- (err, data) => {
-  if (err) throw err;
-  console.table(data);
-  start();
-});
+function viewAllEmployees() {
+  //  return
+  connection.query(
+    "SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name, CONCAT(m.first_name,' ', m.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee m ON employee.manager_id = m.id;",
+    (err, data) => {
+      if (err) throw err;
+      console.table(data);
+      start();
+    }
+  );
 }
 
 //All the Add Functions here
@@ -175,8 +174,18 @@ function addRoles() {
       .then((answer) => {
         console.table(answer);
         connection.query(
-          `insert into role (title, salary, department_id) values ("${answer.title}","${answer.salary}",${answer.departmentId}) `
+          "INSERT INTO role SET ?",
+          {
+            title: answer.title,
+            salary: answer.salary,
+            department_id: answer.departmentId,
+          },
+          (err, data) => {
+            start();
+          }
         );
+        console.log(answer.title, answer.salary, answer.departmentId)
+      
       });
   });
 }
@@ -233,34 +242,46 @@ function addEmployee() {
           .then((response) => {
             console.table(response);
             connection.query(
-              `INSERT INTO employee (first_name, last_name, role_id, manager_id) values ("${response.first_name}","${response.last_name}",${response.roleID}, ${response.managerID}) `
+              "INSERT INTO employee SET ?",
+              {
+                first_name: response.firstName,
+                last_name: response.lastName,
+                role_id: response.roleID,
+                manager_id: response.managerID,
+              },
+              (err, data) => {
+                if (err) throw err;
+                start();
+              }
             );
           });
       }
     );
   });
 }
-
+//Place Update Functions here
 function updateCompany() {
   inquirer
-  .prompt({
-    name: "update",
-    type: "list",
-    message: "What would you like to update?",
-    choices: ["Update_EmployeeRoles", "Delete_Employees",]
-  })
-  .then((answer) => {
-    if (answer.view === "Update_EmployeeRoles") {
-      console.log("You chose to Update Employee Role...\n");
-      updateEmployeeRole();
-    } else if (answer.view === "Delete_Employees") {
-      console.log("You chose to Delete an Employee...\n");
-      deleteEmployee();
-    } 
-  });
+    .prompt({
+      name: "update",
+      type: "list",
+      message: "What would you like to update?",
+      choices: ["Update_EmployeeRoles", "Delete_Employees"],
+    })
+    .then((answer) => {
+      if (answer.update === "Update_EmployeeRoles") {
+        console.log("You chose to Update Employee Role...\n");
+        updateEmployeeRole();
+      } else {
+        console.log("You chose to Delete an Employee...\n");
+        deleteEmployee();
+      }
+    });
 }
 
+//Edit this code to make it update employee role only
 function updateEmployeeRole() {
+  //Show Department
   connection.query("select * from role", (err, data) => {
     const roleChoices = data.map((role) => {
       return {
@@ -268,39 +289,72 @@ function updateEmployeeRole() {
         value: role.id,
       };
     });
-      inquirer
-        .prompt([
-          {
-            name: "roleID",
-            type: "list",
-            message: "Choose your role.",
-            choices: roleChoices,
-          },
-          {
-            name: "id",
-            type: "input",
-            message: "What is your employee ID?",
-          },
-        ])
-        .then((response) => {
-          console.table(response);
-          connection.query(
-            "UPDATE employee SET role_id = ? WHERE id = ? ", 
-            [
-              {
-                rold_id: response.roleID
-              },
-              {
-                id: response.id
-              }
-            ],
-            function(error) {
-              if (error) throw err;
-              console.log("Employee Role successfully updated.");
-              start();
-            }
-          );
-        });
-      }
-  );
+
+    inquirer
+      .prompt([
+        {
+          name: "updateRoleId",
+          type: "list",
+          message: "Which role would you like to choose?",
+          choices: roleChoices,
+        },
+        {
+          name: "employeeID",
+          type: "input",
+          message: "What is your employee ID?",
+        },
+      ])
+      .then((answer) => {
+        console.table(answer);
+        connection.query(
+          "UPDATE employee SET ? WHERE ?",
+          [
+            {
+              role_id: answer.updateRoleId,
+            },
+            {
+              id: answer.employeeID,
+            },
+          ],
+          function (error) {
+            if (error) throw err;
+            console.table(answer);
+            start();
+          }
+        );
+      });
+  });
+}
+
+function deleteEmployee() {
+  //Show Department
+  connection.query("select * from employee", (err, data) => {
+    const employeeChoices = data.map((employee) => {
+      return {
+        name: employee.name,
+        value: employee.id,
+      };
+    });
+
+    inquirer
+      .prompt([
+        {
+          name: "deleteEmployee",
+          type: "list",
+          message: "Which employee would you like to delete?",
+          choices: employeeChoices,
+        },
+      ])
+      .then((answer) => {
+        console.table(answer);
+        connection.query(
+          "DELETE FROM employee WHERE ?",
+          { id: answer.deleteEmployee },
+          function (err, res) {
+            console.table(answer);
+            start();
+          }
+        );
+      });
+  });
 }
