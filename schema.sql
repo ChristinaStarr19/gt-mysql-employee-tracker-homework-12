@@ -26,7 +26,8 @@ CREATE TABLE employee (
     role_id INT NOT NULL,
     manager_id  INT,
     PRIMARY KEY (id),
-    FOREIGN KEY (role_id) REFERENCES role (id)
+    FOREIGN KEY (role_id) REFERENCES role (id),
+    FOREIGN KEY (manager_id) REFERENCES employee (id)
 );
 
 INSERT INTO department (name)
@@ -36,4 +37,12 @@ INSERT INTO role (title, salary, department_id)
 VALUES ("Principal", 90000.00, 1), ("Office Manager", 30000.00, 2), ("Teacher", 50000.00, 3), ("Custodian", 30000.00, 4);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Jason", "Moffit", 1, 1), ("Sherri", "Jackson", 2, 1), ("Christina", "Starr", 3, 1), ("Drew", "Simmons", 4, 1);
+VALUES ("Jason", "Moffit", 1, null), ("Sherri", "Jackson", 2, 1), ("Christina", "Starr", 3, null), ("Drew", "Simmons", 4, 2);
+
+SELECT * FROM employee 
+LEFT JOIN m employee ON employee.manager_id = m.id;
+
+-- ToUpdate an employee's role, use this query
+UPDATE employee
+SET role_id = ?
+WHERE id = ? 

@@ -1,5 +1,6 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+const util = require("util");
 
 // create the connection information for the sql database
 var connection = mysql.createConnection({
@@ -15,7 +16,7 @@ var connection = mysql.createConnection({
   password: "Virtue77$GOD",
   database: "company_db",
 });
-
+// connection.query = util.promisify(connection.query)
 // connect to the mysql server and sql database
 connection.connect(function (err) {
   if (err) throw err;
@@ -43,12 +44,11 @@ function start() {
         console.log("You chose Update_Company...\n");
         updateCompany();
       } else {
-          console.log("Thank you for visiting.")
+        console.log("Thank you for visiting.");
         connection.end();
       }
     });
 }
-
 
 //All of the View Functions
 function viewCompany() {
@@ -57,7 +57,7 @@ function viewCompany() {
       name: "view",
       type: "list",
       message: "What would you like to view?",
-      choices: ["View_Department", "View_Roles", "View_Employees"],
+      choices: ["View_Department", "View_Roles", "View_Employees",],
     })
     .then((answer) => {
       if (answer.view === "View_Department") {
@@ -68,7 +68,8 @@ function viewCompany() {
         viewRoles();
       } else if (answer.view === "View_Employees") {
         console.log("You chose View_Employees...\n");
-        viewEmployee();
+        viewEntireCompany();
+  
       }
     });
 }
@@ -89,36 +90,39 @@ function viewRoles() {
   });
 }
 
-function viewEmployee() {
-  connection.query("SELECT * FROM employee", (err, data) => {
-    if (err) throw err;
-    console.table(data);
-    start();
-  });
+
+function viewEntireCompany() {
+//  return 
+ connection.query("SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name, CONCAT(m.first_name,' ', m.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee m ON employee.manager_id = m.id;",
+ (err, data) => {
+  if (err) throw err;
+  console.table(data);
+  start();
+});
 }
 
 //All the Add Functions here
 function addToCompany() {
-    inquirer
-      .prompt({
-        name: "add",
-        type: "list",
-        message: "What would you like to add?",
-        choices: ["Add_Department", "Add_Roles", "Add_Employee"],
-      })
-      .then((answer) => {
-        if (answer.add === "Add_Department") {
-          console.log("You chose Add_Department...\n");
-          addDepartment();
-        } else if (answer.add === "Add_Roles") {
-          console.log("You chose Add_Roles...\n");
-          addRoles();
-        } else if (answer.add === "Add_Employee") {
-          console.log("You chose Add_Employee...\n");
-          addEmployee();
-        }
-      });
-  }
+  inquirer
+    .prompt({
+      name: "add",
+      type: "list",
+      message: "What would you like to add?",
+      choices: ["Add_Department", "Add_Roles", "Add_Employee"],
+    })
+    .then((answer) => {
+      if (answer.add === "Add_Department") {
+        console.log("You chose Add_Department...\n");
+        addDepartment();
+      } else if (answer.add === "Add_Roles") {
+        console.log("You chose Add_Roles...\n");
+        addRoles();
+      } else if (answer.add === "Add_Employee") {
+        console.log("You chose Add_Employee...\n");
+        addEmployee();
+      }
+    });
+}
 
 function addDepartment() {
   inquirer
@@ -177,45 +181,126 @@ function addRoles() {
   });
 }
 
+"SELECT first_name, last_name, manager_id FROM employee",
+  "WHERE employee.id = manager_id";
 function addEmployee() {
-    //Show Role to make choice
-    connection.query("select * from role", (err, data) => {
-        const roleChoices = data.map((role) => {
+  //Show Manager to make choice, doesn't work, maybe because there is only one manager.
+
+  // Show Role to make choice
+  connection.query("select * from role", (err, data) => {
+    const roleChoices = data.map((role) => {
+      return {
+        name: role.title,
+        value: role.id,
+      };
+    });
+    connection.query(
+      "SELECT first_name, last_name, id FROM employee",
+      (err, data) => {
+        const managerChoices = data.map((employee) => {
           return {
-            name: role.title,
-            value: role.id,
+            name: employee.first_name + " " + employee.last_name,
+            value: employee.id,
           };
         });
-        inquirer.prompt([
+        managerChoices.push({ name: "none", value: null });
+        console.log(managerChoices);
+        inquirer
+          .prompt([
             {
-                name:"roleID",
-                type:"list",
-                message: "Choose your role.",
-                choices: roleChoices
+              name: "roleID",
+              type: "list",
+              message: "Choose your role.",
+              choices: roleChoices,
             },
             {
-                name:"firstName",
-                type:"input",
-                message: "What is your first name?"
+              name: "managerID",
+              type: "list",
+              message: "Choose your manager.",
+              choices: managerChoices,
             },
             {
-                name:"lastName",
-                type:"input",
-                message: "What is your last name?"
+              name: "firstName",
+              type: "input",
+              message: "What is your first name?",
             },
-            // {
-            //     name:"managerName",
-            //     type:"list",
-            //     message: "Choose your Manager",
-            //     choices: managerChoices
-            // }
-            
-        ]).then((response) => {
+            {
+              name: "lastName",
+              type: "input",
+              message: "What is your last name?",
+            },
+          ])
+          .then((response) => {
             console.table(response);
-        connection.query(
-          `INSERT INTO employee (first_name, last_name, role_id, manager_id) values ("${response.first_name}","${response.last_name}",${response.roleID}) `
-        );
-        })
-    
-    })
+            connection.query(
+              `INSERT INTO employee (first_name, last_name, role_id, manager_id) values ("${response.first_name}","${response.last_name}",${response.roleID}, ${response.managerID}) `
+            );
+          });
+      }
+    );
+  });
+}
+
+function updateCompany() {
+  inquirer
+  .prompt({
+    name: "update",
+    type: "list",
+    message: "What would you like to update?",
+    choices: ["Update_EmployeeRoles", "Delete_Employees",]
+  })
+  .then((answer) => {
+    if (answer.view === "Update_EmployeeRoles") {
+      console.log("You chose to Update Employee Role...\n");
+      updateEmployeeRole();
+    } else if (answer.view === "Delete_Employees") {
+      console.log("You chose to Delete an Employee...\n");
+      deleteEmployee();
+    } 
+  });
+}
+
+function updateEmployeeRole() {
+  connection.query("select * from role", (err, data) => {
+    const roleChoices = data.map((role) => {
+      return {
+        name: role.title,
+        value: role.id,
+      };
+    });
+      inquirer
+        .prompt([
+          {
+            name: "roleID",
+            type: "list",
+            message: "Choose your role.",
+            choices: roleChoices,
+          },
+          {
+            name: "id",
+            type: "input",
+            message: "What is your employee ID?",
+          },
+        ])
+        .then((response) => {
+          console.table(response);
+          connection.query(
+            "UPDATE employee SET role_id = ? WHERE id = ? ", 
+            [
+              {
+                rold_id: response.roleID
+              },
+              {
+                id: response.id
+              }
+            ],
+            function(error) {
+              if (error) throw err;
+              console.log("Employee Role successfully updated.");
+              start();
+            }
+          );
+        });
+      }
+  );
 }
